@@ -34,7 +34,7 @@ public class HelloController {
 	 */
 	@RequestMapping(value = "/goIndex")
 	public String goIndex(HttpServletRequest request,Map<String,Object> map){
-		String path =request.getServletContext().getRealPath("/");
+		String path =request.getSession().getServletContext().getRealPath("/");
 		File dir=new File(path+"/upload");
 		File[] files = dir.listFiles();
 		if (files == null||files.length==0) {
@@ -68,12 +68,12 @@ public class HelloController {
 					continue;//忽略首行表头
 				}
 				row=sheet.getRow(i);
-				cell=row.getCell(1);//第一列是工号
+				cell=row.getCell(0);//第一列是工号
 
 				double cellValue = cell.getNumericCellValue();
 				sb.append(new DecimalFormat("#").format(cellValue));
 
-				cell=row.getCell(2);//第二列是名字
+				cell=row.getCell(1);//第二列是名字
 				sb.append("_").append(cell.getStringCellValue()).append(",");
 			}
 
@@ -138,7 +138,7 @@ public class HelloController {
 	@RequestMapping(value = "/download")
 	public String download(HttpServletRequest request,
 						   HttpServletResponse response,Map<String,Object> map) throws Exception {
-		String path =request.getServletContext().getRealPath("/");
+		String path =request.getSession().getServletContext().getRealPath("/");
 		ServletOutputStream sos =null;
 		FileInputStream fis =null;
 		File file =null;

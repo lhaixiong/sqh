@@ -15,10 +15,10 @@
         i{font-style:normal;}
         .vetically{justify-content:center;align-items:center;display:-webkit-flex;}
         .prize_con{position: absolute;width: 100%;height: 100%;background: url(images/firstp_bg.jpg) no-repeat left top / 100% 100%;overflow: hidden;}
-        .prize_grade{font-size:98px;color: #ffe9af;text-align: center;margin: 60px auto 0;}
-        .prize_list{width:55%;height:230px;margin: 20px auto 55px;text-align: center;overflow: hidden;}
+        .prize_grade{font-size:40px;color: #ffe9af;text-align: center;margin: 60px auto 0;}
+        .prize_list{width:55%;height:300px;margin: 10px auto 55px;text-align: center;overflow: hidden;}
         .prize_list ul{width:100%;font-size:0;}
-        .prize_list li{display:inline-block;font-size:30px;color:#f1bf90;text-align: center;width:20%;line-height:100px;font-family:Arial;}
+        .prize_list li{display:inline-block;font-size:15px;color:#f1bf90;text-align: center;width:20%;line-height:30px;font-family:Arial;}
         .start{width: 250px;height: 90px;margin:0 auto;cursor:pointer;}
         .prize_set{position: absolute;right: 60px;bottom:140px;font-size: 16px;color: #f7f3e8;line-height: 30px;}
         .prize_set li{display: inline-block;margin-left: 20px;}
@@ -30,7 +30,7 @@
 
 <div class="wrap">
     <div class="prize_con">
-        <p class="prize_grade"><span>开始抽奖</span> <i>0</i>元</p>
+        <p class="prize_grade">奖品级别:<span></span></p>
         <div class="prize_list vetically">
             <ul>
                 <li>000000</li>
@@ -49,15 +49,14 @@
         <ul class="prize_set">
             <li class="set_grade">奖等
                 <select id="set_grade">
-                    <option>选择奖等</option>
-                    <option>特等奖</option>
-                    <option>一等奖</option>
-                    <option>二等奖</option>
-                    <option>三等奖</option>
+                    <option value="-1">选择奖等</option>
+                    <option value="0">特等奖</option>
+                    <option value="1">一等奖</option>
+                    <option value="2">二等奖</option>
+                    <option value="3">三等奖</option>
                 </select>
             </li>
             <li class="set_people">人数<input type="tel" placeholder="输入中奖人数" id="prizeCount"></li>
-            <li class="set_money">金额<input type="tel" placeholder="输入中奖金额" id="prizeMoney"></li>
         </ul>
     </div>
 </div>
@@ -75,9 +74,6 @@
         for(var i = 0; i < code.length; i++){
             arr[i] = i;
         }
-        console.info(arr)
-        console.info("--------------")
-
         arr.sort(function(){
             return 0.5 - Math.random();
         });
@@ -97,7 +93,7 @@
 
         $(".start").click(function(){
             if($("#prize_btn").val() == 0){
-                if($("#set_grade").val() == "选择奖等") {
+                if($("#set_grade").val() == "-1") {
                     alert("请选择奖等");
                     return;
                 }else if($("#prizeCount").val() == "") {
@@ -106,9 +102,6 @@
                 }else if($("#prizeCount").val() > 10) {
                     alert("单次抽奖人数不能超过10人");
                     return;
-                }else if($("#prizeMoney").val() == "") {
-                    alert("请输入中奖金额");
-                    return;
                 }else{
                     $("#prize_btn").val(1);
                     var num = $("#prizeCount").val();
@@ -116,7 +109,7 @@
 
                     myNumber = setInterval(function(){
                         showRandomNum(num);
-                    }, 30);//这里调节变化时间
+                    }, 100);//这里调节变化时间
                 }
             }else{
                 $("#prize_btn").val(0);
@@ -137,9 +130,6 @@
             $(".prize_grade span").text($(this).val());
         });
 
-        $("#prizeMoney").keyup(function(){
-            $(".prize_grade i").text($(this).val());
-        });
     });
     //获取用户数据集合
     function initUserDatas(){
@@ -152,6 +142,8 @@
             code.push(tempCode);
             codeToNameMap.set(tempCode, tempName);
         });
+        console.info(code);
+        console.info(codeToNameMap);
     }
 </script>
 

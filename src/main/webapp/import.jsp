@@ -65,7 +65,7 @@
        }
 //       var formData=new FormData($("#importForm")[0]);
        var formData=new FormData(document.getElementById("importForm"));
-       debugger;
+       
        var url="http://localhost:8080/importFile?format=json";
        console.log("url:",url);
        $("#importBtn").attr("disabled",true);
@@ -78,11 +78,11 @@
            contentType : false,
            dataType : 'json',
            processData : false,
-           error : function(returndata){debugger;
+           error : function(returndata){
                alert(returndata);
                $("#importBtn").attr("disabled",false);
            },
-           success:function(data){debugger;
+           success:function(data){
                if(data.success==true){
                   alert("导入成功")
                }else{
