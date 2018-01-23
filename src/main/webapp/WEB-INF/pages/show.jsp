@@ -22,7 +22,7 @@
             text-align: center;
         }
         .prize_con{position: absolute;width: 100%;height: 100%;background: url(images/firstp_bg.jpg) no-repeat left top / 100% 100%;overflow: hidden;}
-        .mydiv{overflow-y: auto;text-align:center;color:#f1bf90;width: 50%;margin:5px auto;font-family:Arial;float: none}
+        .mydiv{overflow-y: auto;color:#f1bf90;width: 50%;margin:5px auto;font-family:Arial;float: none}
         .return{background: #fff;width:110px;height:50px;font-size:20px;border:1px solid #8f0000;margin-left: .1rem;color: #000;padding-left:10px;}
     </style>
 
@@ -45,7 +45,7 @@
                 <%--<li>23leuro</li>--%>
             <%--</ul>--%>
         <%--</div>--%>
-        <div style="text-align: center"><a class="return" href="/goIndex">返回抽奖</a></div>
+        <div style="text-align: center"><a class="return" href="${pageContext.request.contextPath}/goIndex">返回抽奖</a></div>
     </div>
 </div>
 <input type="hidden" value="0" id="prize_btn">

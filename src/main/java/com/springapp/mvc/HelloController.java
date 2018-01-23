@@ -205,8 +205,13 @@ public class HelloController {
 		result.put("success",true);
 		System.out.println("开始");
 		String path = request.getSession().getServletContext().getRealPath("upload");
+		File dir=new File(path);
+		if (dir.exists()) {
+			for (File f : dir.listFiles()) {
+				f.delete();
+			}
+		}
 		String fileName = file.getOriginalFilename();
-//        String fileName = new Date().getTime()+".jpg";
 		System.out.println(path);
 		File targetFile = new File(path, fileName);
 		if(!targetFile.exists()){

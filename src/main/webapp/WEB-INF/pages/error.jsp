@@ -2,6 +2,6 @@
 <html>
 <body>
 	<h1>${msg}</h1>
-	<a href="import.jsp">返回导入</a>
+	<a href="${pageContext.request.contextPath}/import.jsp">返回导入</a>
 </body>
 </html>

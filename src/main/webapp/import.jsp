@@ -1,5 +1,5 @@
 <%@ page pageEncoding='UTF-8' contentType="text/html;charset=UTF-8" language="java" %>
-
+<% %>
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -24,11 +24,11 @@
     </div>
     <br>
     <div>
-        <a href="/download">下载上传的文件</a>
+        <a href="${pageContext.request.contextPath}/download">下载上传的文件</a>
     </div>
     <br>
     <div>
-        <a href="/goIndex">去抽奖</a>
+        <a href="${pageContext.request.contextPath}/goIndex">去抽奖</a>
     </div>
 
 
@@ -66,7 +66,7 @@
 //       var formData=new FormData($("#importForm")[0]);
        var formData=new FormData(document.getElementById("importForm"));
        
-       var url="http://localhost:8080/importFile?format=json";
+       var url="${pageContext.request.contextPath}/importFile?format=json";
        console.log("url:",url);
        $("#importBtn").attr("disabled",true);
        $.ajax({

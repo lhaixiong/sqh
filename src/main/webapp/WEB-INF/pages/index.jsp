@@ -178,7 +178,7 @@
             $(".save").attr("disabled",true);
             $.ajax({
                 type:"post",
-                url:"http://localhost:8080/saveResult?format=json",
+                url:"${pageContext.request.contextPath}/saveResult?format=json",
                 data:saveData,
                 dataType : 'json',
                 error : function(returndata){
@@ -208,14 +208,14 @@
                alert("没有任何结果，请先抽奖!");
                return;
            }
-            location.href="http://localhost:8080/show";
+            location.href="${pageContext.request.contextPath}/show";
         });
         $(".back").click(function(){
             if(!canStart){
                 alert("请先保存抽奖结果!")
                 return;
             }
-            location.href="http://localhost:8080/import.jsp";
+            location.href="${pageContext.request.contextPath}/import.jsp";
         });
 
 
