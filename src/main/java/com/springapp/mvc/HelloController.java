@@ -6,6 +6,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,12 +24,47 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 @Controller
 public class HelloController {
+	private static final Logger log= LoggerFactory.getLogger(HelloController.class);
+	//工号-信息映射
+	private static Map<String,String> CODE_INFO_MAP=new HashMap<String, String>();
+	//奖品级别-中奖工号映射
+	private static Map<String,Set<String>> BING_INFO_MAP=new TreeMap<String, Set<String>>();
+
+	/**
+	 * 查看抽奖结果
+	 */
+	@RequestMapping("/show")
+	public String show(HttpServletRequest request,Map<String,Object> map){
+		map.put("userInfo",getUserInfo());
+		map.put("bingoInfo",getBingoCodeByLevel());
+		return "show";
+	}
+
+	/**
+	 * 保存本次抽奖结果
+	 */
+	@RequestMapping("/saveResult")
+	@ResponseBody
+	public Map<String,Object> saveResult(HttpServletRequest request,String prizeGrade,String thisCode){
+		Map<String,Object> map=new HashMap<String, Object>();
+		map.put("success",true);
+		if (!BING_INFO_MAP.containsKey(prizeGrade)) {
+			BING_INFO_MAP.put(prizeGrade,new HashSet<String>());
+		}
+		Set<String> codeSet = BING_INFO_MAP.get(prizeGrade);
+		Collections.addAll(codeSet,thisCode.split(","));
+		return map;
+	}
 
 	/**
 	 * 去抽奖页面
@@ -41,13 +78,71 @@ public class HelloController {
 			map.put("msg","您还没有导入Excel文件，请先导入!");
 			return "error";
 		}
-		String userInfo=getExcelUserInfo(files[0]);
+		if(CODE_INFO_MAP.isEmpty()){
+			getExcelUserToMap(files[0]);
+		}
+		String userInfo=getUserInfo();
 		map.put("userInfo",userInfo);
+		map.put("alreadyBingo",getAllBingoCode());
+
 		return "index";
 	}
-	private String getExcelUserInfo(File file){
+
+	/**
+	 * 从缓存中得到用户信息
+	 * @return
+	 */
+	private String getUserInfo(){
+		StringBuilder sb=new StringBuilder();
+		for (Map.Entry<String, String> entry : CODE_INFO_MAP.entrySet()) {
+			//工号_部门-名字,工号_部门-名字,
+			sb.append(entry.getKey()).append("_").append(entry.getValue()).append(",");
+		}
+		return sb.length()==0?sb.toString():sb.substring(0,sb.length()-1);
+	}
+
+	/**
+	 * 得到所有中奖工号
+	 * @return
+	 */
+	private String getAllBingoCode(){
+		StringBuilder sb=new StringBuilder();
+		for (Set<String> codes : BING_INFO_MAP.values()) {
+			for (String code : codes) {
+				//工号,工号,
+				sb.append(code).append(",");
+			}
+		}
+		return sb.length()==0?sb.toString():sb.substring(0,sb.length()-1);
+
+	}
+	/**
+	 * 得到所有中奖工号,按奖品级别分组
+	 * @return
+	 */
+	private String getBingoCodeByLevel(){
+		StringBuilder sb=new StringBuilder();
+		//"字符串格式奖品级别_工号1，工号2&奖品级别_工号1，工号2 ，例如1_1,2,3&2_4,5,6";
+		for (Map.Entry<String, Set<String>> entry : BING_INFO_MAP.entrySet()) {
+			String prizeLevel=entry.getKey();
+			Set<String> codes=entry.getValue();
+			sb.append(prizeLevel).append("_");
+
+			for (String code : codes) {
+				sb.append(code).append(",");
+			}
+			sb.append("&");
+		}
+		return sb.length()==0?sb.toString():sb.substring(0,sb.length()-1);
+
+	}
+
+	/**
+	 * 把Excel表用户放入CODE_INFO_MAP
+	 * @param file
+	 */
+	private void getExcelUserToMap(File file){
 		FileInputStream fis =null;
-		StringBuffer sb=new StringBuffer();
 		try {
 			fis=new FileInputStream(file);
 
@@ -71,10 +166,14 @@ public class HelloController {
 				cell=row.getCell(0);//第一列是工号
 
 				double cellValue = cell.getNumericCellValue();
-				sb.append(new DecimalFormat("#").format(cellValue));
+				String code=new DecimalFormat("#").format(cellValue);
 
-				cell=row.getCell(1);//第二列是名字
-				sb.append("_").append(cell.getStringCellValue()).append(",");
+
+				cell=row.getCell(1);//第二列是部门
+				String dept_name=cell.getStringCellValue();
+				cell=row.getCell(2);//第三列是姓名
+				dept_name=dept_name+"-"+cell.getStringCellValue();
+				CODE_INFO_MAP.put(code,dept_name);
 			}
 
 		}catch (Exception e){
@@ -88,7 +187,6 @@ public class HelloController {
 				}
 			}
 		}
-		return sb.length()==0?sb.toString():sb.substring(0,sb.length()-1);
 	}
 
 
@@ -118,6 +216,8 @@ public class HelloController {
 		//保存
 		try {
 			file.transferTo(targetFile);
+			BING_INFO_MAP.clear();
+			CODE_INFO_MAP.clear();
 		} catch (Exception e) {
 			e.printStackTrace();
 			result.put("success",false);
@@ -145,6 +245,10 @@ public class HelloController {
 
 		try{
 			File dir=new File(path+"/upload");
+			if(!dir.exists()){
+				map.put("msg","您还没有导入Excel文件，请先导入!");
+				return "error";
+			}
 			File[] files = dir.listFiles();
 			if (files == null||files.length==0) {
 				map.put("msg","您还没有导入Excel文件，请先导入!");

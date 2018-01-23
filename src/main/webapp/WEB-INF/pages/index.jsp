@@ -47,13 +47,17 @@
         </div>
         <p class="start"><img src="images/prize_start.png" alt=""></p>
         <ul class="prize_set">
+            <li><input class="back" type="button" value="返回导入"></li>
+            <li><input class="save" type="button" value="保存"></li>
+            <li><input class="show" type="button" value="查看"></li>
             <li class="set_grade">奖等
                 <select id="set_grade">
                     <option value="-1">选择奖等</option>
-                    <option value="0">特等奖</option>
                     <option value="1">一等奖</option>
                     <option value="2">二等奖</option>
                     <option value="3">三等奖</option>
+                    <option value="4">四等奖</option>
+                    <option value="5">五等奖</option>
                 </select>
             </li>
             <li class="set_people">人数<input type="tel" placeholder="输入中奖人数" id="prizeCount"></li>
@@ -66,12 +70,15 @@
     var arr = [];
 //    var code = [302610,210022,159862,158602,145635,856997,586223,546221,145213,987451,251364,854136,581698,123785,521387,752169,718954,412321,898989,121245,788565,458558,589659,455212,964632,458412,223344,112233,335566,778899];
     var code = [];//工号集合
-    var codeToNameMap=new Map();
+    var codeToNameMap=new Map();//工号-名字映射
+    var allBingoCode=[];//所有中奖工号集合
+    var thisBingoCode=[];//本次中奖工号集合
+    var canStart=true;
 
     /*随机所有的code并且不重复*/
-    function showRandomNum(num) {
+    function showRandomNum(num,unSelectedCodes) {
         var li = "";
-        for(var i = 0; i < code.length; i++){
+        for(var i = 0; i < unSelectedCodes.length; i++){
             arr[i] = i;
         }
         arr.sort(function(){
@@ -80,9 +87,9 @@
 
         for(var i = 0; i < num; i++){
             var index = arr[i];
-            var tempCode=code[index];
+            var tempCode=unSelectedCodes[index];
             var tempName=codeToNameMap.get(tempCode);
-            li += '<li>'+tempName+'('+code[index]+')</li>';
+            li += '<li codeData='+tempCode+'>'+tempName+'</li>';
         }
 
         $(".prize_list ul").html(li);
@@ -91,7 +98,12 @@
     $(function () {
         initUserDatas();
 
-        $(".start").click(function(){
+        $(".start").click(function(){//开始抽奖
+            if(!canStart){
+                alert("请先保存本次抽奖结果!");
+                return;
+            }
+
             if($("#prize_btn").val() == 0){
                 if($("#set_grade").val() == "-1") {
                     alert("请选择奖等");
@@ -103,18 +115,32 @@
                     alert("单次抽奖人数不能超过10人");
                     return;
                 }else{
-                    $("#prize_btn").val(1);
+                    //下次抽奖前，要去除已经中过奖的工号
+                    var unSelectedCodes=[];
+                    $.each(code,function(i,o){
+                        if($.inArray(o,allBingoCode)<0){//没在中奖名单中
+                            unSelectedCodes.push(o);
+                        }
+                    });
                     var num = $("#prizeCount").val();
+                    //当前输入中奖人数大于未中奖人数，重新输入中奖人数
+                    if(num>unSelectedCodes.length){
+                        alert("当前输入中奖人数大于未中奖人数，重新输入中奖人数!")
+                        return;
+                    }
+
+                    $("#prize_btn").val(1);
                     $(this).find("img").attr("src","images/prize_stop.png");
 
                     myNumber = setInterval(function(){
-                        showRandomNum(num);
-                    }, 100);//这里调节变化时间
+                        showRandomNum(num,unSelectedCodes);
+                    }, 50);//这里调节变化时间
                 }
-            }else{
+            }else{//停止抽奖
                 $("#prize_btn").val(0);
                 clearInterval(myNumber);
                 $(this).find("img").attr("src","images/prize_start.png");
+                canStart=false;//抽奖停止后，要保存结果再进行下一次抽奖
             }
         });
 
@@ -130,10 +156,73 @@
             $(".prize_grade span").text($(this).val());
         });
 
+        //保存抽奖结果到后台
+        $(".save").click(function(){
+            thisBingoCode=[];//本次结果清空
+            if($(".prize_list li").first().html()=="000000"){
+                alert("请先抽奖!");
+                return;
+            }
+            $(".prize_list li").each(function(){
+                var tempCode=$(this).attr("codeData");
+                thisBingoCode.push(tempCode);//记录本次结果
+                allBingoCode.push(tempCode);//添加到所有中奖集合中去
+            });
+            //组装数据保存到后台
+            var prizeGrade=$("#set_grade").val()
+            var thisCode=thisBingoCode.join(",");
+
+            var saveData={};
+            saveData.prizeGrade=prizeGrade;
+            saveData.thisCode=thisCode;
+            $(".save").attr("disabled",true);
+            $.ajax({
+                type:"post",
+                url:"http://localhost:8080/saveResult?format=json",
+                data:saveData,
+                dataType : 'json',
+                error : function(returndata){
+                    alert(returndata);
+                    alert("保存失败，请手动复制保存到记事本");
+                    canStart=true;
+                    $(".save").attr("disabled",false);
+                },
+                success:function(data){
+                    if(data.success==true){
+                        alert("保存成功")
+                    }else{
+                        alert("保存失败，请手动复制保存到记事本")
+                    }
+                    canStart=true;
+                    $(".save").attr("disabled",false);
+                }
+            })
+        });
+
+        $(".show").click(function(){
+            if(!canStart){
+                alert("请先保存抽奖结果!")
+                return;
+            }
+           if(allBingoCode.length==0){
+               alert("没有任何结果，请先抽奖!");
+               return;
+           }
+            location.href="http://localhost:8080/show";
+        });
+        $(".back").click(function(){
+            if(!canStart){
+                alert("请先保存抽奖结果!")
+                return;
+            }
+            location.href="http://localhost:8080/import.jsp";
+        });
+
+
     });
     //获取用户数据集合
     function initUserDatas(){
-        var userInfo="${userInfo}";//字符串格式"工号_名字,工号_名字,"
+        var userInfo="${userInfo}";//字符串格式"工号_部门-名字,工号_部门-名字,"
         var users=userInfo.split(",");
         $.each( users, function(i, o){
 
@@ -142,8 +231,13 @@
             code.push(tempCode);
             codeToNameMap.set(tempCode, tempName);
         });
-        console.info(code);
-        console.info(codeToNameMap);
+
+        //处理已抽奖
+        var alreadyBingoInfo="${alreadyBingo}";
+        var tempCodes=alreadyBingoInfo.split(",");
+        $.each(tempCodes,function(i,o){
+            allBingoCode.push(o);
+        })
     }
 </script>
 
