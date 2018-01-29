@@ -1,5 +1,6 @@
 package com.springapp.mvc;
 
+import com.springapp.mvc.util.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -46,7 +47,9 @@ public class HelloController {
 	@RequestMapping("/show")
 	public String show(HttpServletRequest request,Map<String,Object> map){
 		map.put("userInfo",getUserInfo());
-		map.put("bingoInfo",getBingoCodeByLevel());
+		String bingoInfo=getBingoCodeByLevel();
+		map.put("bingoInfo",bingoInfo);
+		log.info("查看抽奖结果"+bingoInfo);
 		return "show";
 	}
 
@@ -61,8 +64,16 @@ public class HelloController {
 		if (!BING_INFO_MAP.containsKey(prizeGrade)) {
 			BING_INFO_MAP.put(prizeGrade,new HashSet<String>());
 		}
+		String[] codes = thisCode.split(",");
+		StringBuilder sb=new StringBuilder();
+		for (String code : codes) {
+			if (StringUtils.isNotEmpty(code)) {
+				sb.append(CODE_INFO_MAP.get(code)).append(",");
+			}
+		}
+		log.info("日志保存本次中奖：中奖级别:"+prizeGrade+";中奖工号："+thisCode+"中奖人员:"+sb.toString());
 		Set<String> codeSet = BING_INFO_MAP.get(prizeGrade);
-		Collections.addAll(codeSet,thisCode.split(","));
+		Collections.addAll(codeSet,codes);
 		return map;
 	}
 
@@ -82,8 +93,10 @@ public class HelloController {
 			getExcelUserToMap(files[0]);
 		}
 		String userInfo=getUserInfo();
-		map.put("userInfo",userInfo);
-		map.put("alreadyBingo",getAllBingoCode());
+		map.put("userInfo", userInfo);
+		String allBingoCode = getAllBingoCode();
+		map.put("alreadyBingo",allBingoCode);
+		log.info("返回去抽奖的信息,alreadyBingo:"+allBingoCode);
 
 		return "index";
 	}
@@ -225,10 +238,11 @@ public class HelloController {
 			CODE_INFO_MAP.clear();
 		} catch (Exception e) {
 			e.printStackTrace();
+			log.error("上传文件出错，",e);
 			result.put("success",false);
 		}
 		model.addAttribute("fileUrl", request.getContextPath()+"/upload/"+fileName);
-
+		log.info("上传文件成功");
 		return result;
 	}
 
@@ -286,9 +300,11 @@ public class HelloController {
 				sos.write(buffer,0,len);
 			}
 			sos.flush();
+			log.info("下载文件成功");
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			log.error("下载文件出错,",e);
 			map.put("msg",e.getMessage());
 		}finally{
 			if(fis!=null){

@@ -67,7 +67,6 @@
 <input type="hidden" value="0" id="prize_btn">
 <script>
     var myNumber;
-    var arr = [];
 //    var code = [302610,210022,159862,158602,145635,856997,586223,546221,145213,987451,251364,854136,581698,123785,521387,752169,718954,412321,898989,121245,788565,458558,589659,455212,964632,458412,223344,112233,335566,778899];
     var code = [];//工号集合
     var codeToNameMap=new Map();//工号-名字映射
@@ -77,13 +76,21 @@
 
     /*随机所有的code并且不重复*/
     function showRandomNum(num,unSelectedCodes) {
+//        console.info("before showRandomNum arr:")
+//        console.info(arr);
+        var arr = [];
         var li = "";
         for(var i = 0; i < unSelectedCodes.length; i++){
+//            var tempI=i;
             arr[i] = i;
         }
+//        console.info("before arr.sort arr:")
+//        console.info(arr);
         arr.sort(function(){
             return 0.5 - Math.random();
         });
+//        console.info("after sort arr:")
+//        console.info(arr);
 
         for(var i = 0; i < num; i++){
             var index = arr[i];
@@ -128,13 +135,16 @@
                         alert("当前输入中奖人数大于未中奖人数，重新输入中奖人数!")
                         return;
                     }
-
+//                    console.info("抽奖前:已经中奖的工号:");
+//                    console.info(allBingoCode);
+//                    console.info("抽奖前:待抽的工号:");
+//                    console.info(unSelectedCodes);
                     $("#prize_btn").val(1);
                     $(this).find("img").attr("src","images/prize_stop.png");
 
                     myNumber = setInterval(function(){
                         showRandomNum(num,unSelectedCodes);
-                    }, 50);//这里调节变化时间
+                    }, 30);//这里调节变化时间
                 }
             }else{//停止抽奖
                 $("#prize_btn").val(0);
@@ -175,6 +185,8 @@
             var saveData={};
             saveData.prizeGrade=prizeGrade;
             saveData.thisCode=thisCode;
+//            console.info("这次抽奖后数据:")
+//            console.info(saveData);
             $(".save").attr("disabled",true);
             $.ajax({
                 type:"post",
